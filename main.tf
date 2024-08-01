@@ -70,29 +70,3 @@ resource "azurerm_container_registry" "inchapers_acr" {
 resource "random_id" "acr_id" {
   byte_length = 4
 }
-
-resource "null_resource" "acr_webhook" {
-  provisioner "local-exec" {
-    command = <<EOT
-      az acr webhook create \
-        --name inchcape-webhook \
-        --registry ${azurerm_container_registry.inchapers_acr.name} \
-        --uri https://${azurerm_app_service.inchcapers-appservice.default_site_hostname}/api/deployments/container \
-        --actions push \
-        --filters '{"tag": ["latest"]}' \
-        --query id \
-        --output tsv
-    EOT
-    environment = {
-      AZURE_SUBSCRIPTION_ID = var.azure_subscription_id
-      AZURE_CLIENT_ID       = var.azure_client_id
-      AZURE_CLIENT_SECRET   = var.azure_client_secret
-      AZURE_TENANT_ID       = var.azure_tenant_id
-    }
-  }
-
-  depends_on = [
-    azurerm_container_registry.inchapers_acr,
-    azurerm_app_service.inchcapers-appservice
-  ]
-}
